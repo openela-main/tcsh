@@ -1,0 +1,48 @@
+From 1ef6e9d0eef9278829f863fff55755b7a5415b81 Mon Sep 17 00:00:00 2001
+From: Christos Zoulas <christos@zoulas.com>
+Date: Fri, 11 Jan 2019 10:49:54 -0500
+Subject: [PATCH] Abort history loading on long lines
+
+diff --git a/sh.lex.c b/sh.lex.c
+index fee790a..e945795 100644
+--- a/sh.lex.c
++++ b/sh.lex.c
+@@ -145,6 +145,7 @@ lex(struct wordent *hp)
+     struct wordent *wdp;
+     eChar    c;
+     int     parsehtime = enterhist;
++    int	    toolong = 0;
+ 
+     histvalid = 0;
+     histline.len = 0;
+@@ -179,6 +180,8 @@ lex(struct wordent *hp)
+ 	wdp = new;
+ 	wdp->word = word(parsehtime);
+ 	parsehtime = 0;
++	if (enterhist && toolong++ > 10 * 1024)
++	    stderror(ERR_LTOOLONG);
+     } while (wdp->word[0] != '\n');
+     cleanup_ignore(hp);
+     cleanup_until(hp);
+@@ -291,9 +294,12 @@ word(int parsehtime)
+     Char    hbuf[12];
+     int	    h;
+     int dolflg;
++    int toolong = 0;
+ 
+     cleanup_push(&wbuf, Strbuf_cleanup);
+ loop:
++    if (enterhist && toolong++ > 256 * 1024)
++	seterror(ERR_WTOOLONG);
+     while ((c = getC(DOALL)) == ' ' || c == '\t')
+ 	continue;
+     if (cmap(c, _META | _ESC))
+@@ -352,6 +358,8 @@ word(int parsehtime)
+     c1 = 0;
+     dolflg = DOALL;
+     for (;;) {
++	if (enterhist && toolong++ > 256 * 1024)
++	    seterror(ERR_WTOOLONG);
+ 	if (c1) {
+ 	    if (c == c1) {
+ 		c1 = 0;

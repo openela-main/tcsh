@@ -1,0 +1,43 @@
+From 8e6dfd53321a0b0047f7d75db21a946c166c600b Mon Sep 17 00:00:00 2001
+From: Christos Zoulas <christos@zoulas.com>
+Date: Fri, 17 Feb 2017 11:17:27 -0500
+Subject: [PATCH] Unfortunately the AsciiOnly reversion causes a SEGV because
+ *ch is used to index in the command array, and now contains INVALID_BYTE. env
+ -i ./tcsh <meta>b
+
+---
+ ed.inputl.c | 18 +++++++++++-------
+ 1 file changed, 11 insertions(+), 7 deletions(-)
+
+diff --git a/ed.inputl.c b/ed.inputl.c
+index f543a6f..1a0d356 100644
+--- a/ed.inputl.c
++++ b/ed.inputl.c
+@@ -796,13 +796,17 @@ GetNextChar(Char *cp)
+ 		return -1;
+ 	    }
+ 	}
+-	cbp++;
+-	if (normal_mbtowc(cp, cbuf, cbp) == -1) {
+-	    reset_mbtowc();
+-	    if (cbp < MB_CUR_MAX)
+-		continue; /* Maybe a partial character */
+-	    /* And drop the following bytes, if any */
+-	    *cp = (unsigned char)*cbuf | INVALID_BYTE;
++	if (AsciiOnly) {
++	    *cp = (unsigned char)*cbuf;
++	} else {
++	    cbp++;
++	    if (normal_mbtowc(cp, cbuf, cbp) == -1) {
++		reset_mbtowc();
++		if (cbp < MB_CUR_MAX)
++		    continue; /* Maybe a partial character */
++		/* And drop the following bytes, if any */
++		*cp = (unsigned char)*cbuf | INVALID_BYTE;
++	    }
+ 	}
+ 	break;
+     }
+-- 
+2.9.3
+

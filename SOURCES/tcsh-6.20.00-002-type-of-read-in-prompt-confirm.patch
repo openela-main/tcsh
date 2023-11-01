@@ -1,0 +1,49 @@
+From 75ccc1197d63d015348b9113ed8d9f7abace567e Mon Sep 17 00:00:00 2001
+From: christos <christos>
+Date: Mon, 28 Nov 2016 17:14:20 +0000
+Subject: [PATCH] Fix type of read in prompt confirmation (eg. rmstar) (David
+ Kaspar)
+
+---
+ Fixes     | 1 +
+ sh.func.c | 8 +++++---
+ 2 files changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/Fixes b/Fixes
+index c79dc38..1c2e183 100644
+--- a/Fixes
++++ b/Fixes
+@@ -1,3 +1,4 @@
++ 22. Fix type of read in prompt confirmation (eg. rmstar) (David Kaspar)
+  21. PR/471: Delay arginp parsing
+  20. V6.20.00 - 20161124
+  19. Don't resize the screen if it did not change size.
+diff --git a/sh.func.c b/sh.func.c
+index a866076..2118399 100644
+--- a/sh.func.c
++++ b/sh.func.c
+@@ -2734,16 +2734,18 @@ nlsclose(void)
+ int
+ getYN(const char *prompt)
+ {
+-    int doit, c;
++    int doit;
++    char c;
++
+     xprintf("%s", prompt);
+     flush();
+-    (void) force_read(SHIN, &c, 1);
++    (void) force_read(SHIN, &c, sizeof(c));
+     /* 
+      * Perhaps we should use the yesexpr from the
+      * actual locale
+      */
+     doit = (strchr(CGETS(22, 14, "Yy"), c) != NULL);
+-    while (c != '\n' && force_read(SHIN, &c, 1) == 1)
++    while (c != '\n' && force_read(SHIN, &c, sizeof(c)) == sizeof(c))
+ 	continue;
+     return doit;
+ }
+-- 
+2.7.4
+

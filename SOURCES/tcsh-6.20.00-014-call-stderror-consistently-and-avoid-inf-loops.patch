@@ -1,0 +1,35 @@
+From 38ffe6da549152a0c411407f5846d0b8896bc25c Mon Sep 17 00:00:00 2001
+From: Jan Macku <jamacku@redhat.com>
+Date: Thu, 30 Jul 2020 09:42:39 +0200
+Subject: [PATCH] Call stderror consistently and avoid inf loops
+Suggested by Kamil Dudka
+
+---
+ sh.lex.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/sh.lex.c b/sh.lex.c
+index a10436c..fcaae97 100644
+--- a/sh.lex.c
++++ b/sh.lex.c
+@@ -304,7 +304,7 @@ word(int parsehtime)
+     cleanup_push(&wbuf, Strbuf_cleanup);
+ loop:
+     if (enterhist && toolong++ > 256 * 1024)
+-	seterror(ERR_WTOOLONG);
++	stderror(ERR_WTOOLONG);
+     while ((c = getC(DOALL)) == ' ' || c == '\t')
+ 	continue;
+     if (cmap(c, _META | _ESC))
+@@ -364,7 +364,7 @@ loop:
+     dolflg = DOALL;
+     for (;;) {
+ 	if (enterhist && toolong++ > 256 * 1024)
+-	    seterror(ERR_WTOOLONG);
++	    stderror(ERR_WTOOLONG);
+ 	if (c1) {
+ 	    if (c == c1) {
+ 		c1 = 0;
+-- 
+2.25.4
+
