@@ -1,0 +1,31 @@
+From 67db04d8d8ada0aa2fb7dfdf83f3a408ad5a01dc Mon Sep 17 00:00:00 2001
+From: zoulasc <christos@zoulas.com>
+Date: Mon, 20 Jan 2020 11:29:01 -0500
+Subject: [PATCH] Prevent phup() and record() from being executed more than
+ once because writing history recursively deadlocks (Brett Frankenberger)
+diff --git a/sh.c b/sh.c
+index dd87172..75ba62d 100644
+--- a/sh.c
++++ b/sh.c
+@@ -1839,6 +1839,10 @@ exitstat(void)
+ void
+ phup(void)
+ {
++    static int again = 0;
++    if (again++)
++	return;
++
+     if (loginsh) {
+ 	setcopy(STRlogout, STRhangup, VAR_READWRITE);
+ #ifdef _PATH_DOTLOGOUT
+@@ -2516,6 +2520,10 @@ defaultpath(void)
+ static void
+ record(void)
+ {
++    static int again = 0;
++    if (again++)
++	return;
++
+     if (!fast) {
+ 	recdirs(NULL, adrof(STRsavedirs) != NULL);
+ 	rechist(NULL, adrof(STRsavehist) != NULL);

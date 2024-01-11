@@ -1,0 +1,28 @@
+From 2309245d647853442f6a5450130f56499698176e Mon Sep 17 00:00:00 2001
+From: Christos Zoulas <christos@zoulas.com>
+Date: Wed, 7 Dec 2016 02:52:27 +0000
+Subject: [PATCH] Don't play pointer tricks that are undefined in modern c
+ (Brooks Davis)
+
+---
+ tw.init.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/tw.init.c b/tw.init.c
+index 68adbb9..d9525c5 100644
+--- a/tw.init.c
++++ b/tw.init.c
+@@ -125,9 +125,8 @@ tw_str_add(stringlist_t *sl, size_t len)
+ 	sl->buff = xrealloc(sl->buff, sl->tbuff * sizeof(Char));
+ 	/* Re-thread the new pointer list, if changed */
+ 	if (ptr != NULL && ptr != sl->buff) {
+-	    intptr_t offs = sl->buff - ptr;
+ 	    for (i = 0; i < sl->nlist; i++)
+-		sl->list[i] += offs;
++		sl->list[i] = sl->buff + (sl->list[i] - ptr);
+ 	}
+ 	disabled_cleanup(&pintr_disabled);
+     }
+-- 
+2.9.3
+

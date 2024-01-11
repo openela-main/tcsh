@@ -1,0 +1,25 @@
+From 8235759d3096654ff2f5c7118bd23f40b7dcbc8f Mon Sep 17 00:00:00 2001
+From: christos <christos>
+Date: Sat, 26 Nov 2016 00:14:18 +0000
+Subject: [PATCH] Add all flags for the gethost build.
+
+---
+ Makefile.in | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile.in b/Makefile.in
+index 1ef8cb7..5c30451 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -449,7 +449,7 @@ pure:$(P) ${OBJS}
+ 
+ gethost:  gethost.c sh.err.h tc.const.h sh.h
+ 	rm -f gethost
+-	${CC_FOR_GETHOST} -o gethost ${CPPFLAGS} $(srcdir)/gethost.c
++	${CC_FOR_GETHOST} -o gethost ${CPPFLAGS} ${CFLAGS} ${LDFLAGS} $(srcdir)/gethost.c
+ 
+ tc.defs.c:	gethost host.defs
+ 	@rm -f $@.tmp
+-- 
+2.7.4
+

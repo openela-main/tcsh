@@ -1,0 +1,77 @@
+From cab544f34758f71ab3070f343efb6daee68daf81 Mon Sep 17 00:00:00 2001
+From: rpm-build <rpm-build>
+Date: Wed, 8 Sep 2021 11:00:35 +0200
+Subject: [PATCH] Modifiers no longer breaks history
+
+Fix bug reported by Jan Macku:  alias postcmd '/bin/echo
+ -n "COMMAND:"'"'"'\!#:-$:gx'"'"''     echo 1 2 3 4 5
+ ^P prints     echo 1 2 3 4
+ Reason: domod() enters junk history entries with event number
+ HIST_PURGE aliasrun which is used to run postcmd modifies the history
+ appending those entries. Fix by explicitly cleaning up those entries in
+ aliasrun
+
+ Based on upstream patch: 04a68ad191cfcb87cdff70a6b913721e423cd28b from Christos Zoulas <christos@zoulas.com>
+---
+ sh.decls.h |  1 +
+ sh.hist.c  | 11 +++++++++++
+ tc.func.c  |  2 ++
+ 3 files changed, 14 insertions(+)
+
+diff --git a/sh.decls.h b/sh.decls.h
+index 8dc22d5..a75563b 100644
+--- a/sh.decls.h
++++ b/sh.decls.h
+@@ -218,6 +218,7 @@ extern  int	  	  t_pmatch	(const Char *, const Char *,
+  */
+ extern	void	 	  dohist	(Char **, struct command *);
+ extern  struct Hist 	 *enthist	(int, struct wordent *, int, int, int);
++extern  void		  cleanhist	(void);
+ extern	void	 	  savehist	(struct wordent *, int);
+ extern	char		 *fmthist	(int, ptr_t);
+ extern	void		  rechist	(Char *, int);
+diff --git a/sh.hist.c b/sh.hist.c
+index 1abd522..bafc711 100644
+--- a/sh.hist.c
++++ b/sh.hist.c
+@@ -1178,6 +1178,17 @@ dohist(Char **vp, struct command *c)
+     }
+ }
+ 
++void
++cleanhist(void)
++{
++    struct Hist *hp, *np;
++
++    for (hp = &Histlist; (np = hp->Hnext) != NULL;) {
++	if (np->Hnum != HIST_PURGE)
++	    return;
++	hremove(np), hfree(np);
++    }
++}
+ 
+ char *
+ fmthist(int fmt, ptr_t ptr)
+diff --git a/tc.func.c b/tc.func.c
+index feb1c89..4849b55 100644
+--- a/tc.func.c
++++ b/tc.func.c
+@@ -999,6 +999,7 @@ aliasrun(int cnt, Char *s1, Char *s2)
+ 
+     getexit(osetexit);
+     if (seterr) {
++	cleanhist();
+ 	xfree(seterr);
+ 	seterr = NULL;	/* don't repeatedly print err msg. */
+     }
+@@ -1075,6 +1076,7 @@ aliasrun(int cnt, Char *s1, Char *s2)
+     }
+     cleanup_until(&w);
+     pendjob();
++	cleanhist();
+     /* Restore status */
+     setv(STRstatus, putn((tcsh_number_t)status), VAR_READWRITE);
+ }
+-- 
+2.31.1
+

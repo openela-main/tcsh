@@ -1,0 +1,58 @@
+From 534e2628b598b38801759535f38c228793253345 Mon Sep 17 00:00:00 2001
+From: rpm-build <rpm-build>
+Date: Wed, 8 Sep 2021 10:52:43 +0200
+Subject: [PATCH] Expose HIST_PURGE - Compare pointer against null - Use 
+ initlex()
+
+Based on upstream patch c14852867786c798f98a23d075e76a2e2acce204 from Christos Zoulas <christos@zoulas.com>
+---
+ sh.h     | 1 +
+ sh.lex.c | 6 ++----
+ 2 files changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/sh.h b/sh.h
+index a41e2e0..5f9cb14 100644
+--- a/sh.h
++++ b/sh.h
+@@ -1019,6 +1019,7 @@ EXTERN struct varent {
+  * The following are for interfacing redo substitution in
+  * aliases to the lexical routines.
+  */
++#define HIST_PURGE	-500000
+ EXTERN struct wordent *alhistp IZERO_STRUCT;/* Argument list (first) */
+ EXTERN struct wordent *alhistt IZERO_STRUCT;/* Node after last in arg list */
+ EXTERN Char  **alvec IZERO_STRUCT,
+diff --git a/sh.lex.c b/sh.lex.c
+index b754fd3..065c78b 100644
+--- a/sh.lex.c
++++ b/sh.lex.c
+@@ -155,8 +155,7 @@ lex(struct wordent *hp)
+     histline.len = 0;
+ 
+     btell(&lineloc);
+-    hp->next = hp->prev = hp;
+-    hp->word = STRNULL;
++	initlex(hp);
+     hadhist = 0;
+     do
+ 	c = readc(0);
+@@ -703,7 +702,7 @@ getexcl(Char sc)
+ 
+     lastev = eventno;
+     hp = gethent(sc);
+-    if (hp == 0)
++    if (hp == NULL)
+ 	return;
+     hadhist = 1;
+     dol = 0;
+@@ -893,7 +892,6 @@ getsub(struct wordent *en)
+  * We raise the limit to 50000000
+  */
+ 
+-#define HIST_PURGE -50000000
+ static struct wordent *
+ dosub(Char sc, struct wordent *en, int global)
+ {
+-- 
+2.31.1
+
